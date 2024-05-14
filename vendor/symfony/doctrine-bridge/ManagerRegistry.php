@@ -24,7 +24,10 @@ use Symfony\Component\VarExporter\LazyObjectInterface;
  */
 abstract class ManagerRegistry extends AbstractManagerRegistry
 {
-    protected Container $container;
+    /**
+     * @var Container
+     */
+    protected $container;
 
     protected function getService($name): object
     {

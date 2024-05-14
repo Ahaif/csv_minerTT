@@ -80,7 +80,10 @@ class Router extends BaseRouter implements WarmableInterface, ServiceSubscriberI
         return $this->collection;
     }
 
-    public function warmUp(string $cacheDir, ?string $buildDir = null): array
+    /**
+     * @param string|null $buildDir
+     */
+    public function warmUp(string $cacheDir /* , string $buildDir = null */): array
     {
         $currentDir = $this->getOption('cache_dir');
 

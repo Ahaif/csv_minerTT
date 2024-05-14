@@ -11,6 +11,7 @@
 
 namespace Symfony\Bundle\FrameworkBundle\CacheWarmer;
 
+use Doctrine\Common\Annotations\AnnotationException;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Serializer\Mapping\Factory\CacheClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
@@ -38,7 +39,10 @@ class SerializerCacheWarmer extends AbstractPhpFileCacheWarmer
         $this->loaders = $loaders;
     }
 
-    protected function doWarmUp(string $cacheDir, ArrayAdapter $arrayAdapter, ?string $buildDir = null): bool
+    /**
+     * @param string|null $buildDir
+     */
+    protected function doWarmUp(string $cacheDir, ArrayAdapter $arrayAdapter /* , string $buildDir = null */): bool
     {
         if (!$this->loaders) {
             return true;
@@ -50,6 +54,8 @@ class SerializerCacheWarmer extends AbstractPhpFileCacheWarmer
             foreach ($loader->getMappedClasses() as $mappedClass) {
                 try {
                     $metadataFactory->getMetadataFor($mappedClass);
+                } catch (AnnotationException) {
+                    // ignore failing annotations
                 } catch (\Exception $e) {
                     $this->ignoreAutoloadException($mappedClass, $e);
                 }

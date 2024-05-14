@@ -138,7 +138,10 @@ trait MicroKernelTrait
         }
     }
 
-    public function registerContainerConfiguration(LoaderInterface $loader): void
+    /**
+     * @return void
+     */
+    public function registerContainerConfiguration(LoaderInterface $loader)
     {
         $loader->load(function (ContainerBuilder $container) use ($loader) {
             $container->loadFromExtension('framework', [

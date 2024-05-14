@@ -55,7 +55,7 @@
     <parameter key="fragment.renderer.hinclude.global_template">null</parameter>
     <parameter key="fragment.path">/_fragment</parameter>
     <parameter key="kernel.secret">%env(APP_SECRET)%</parameter>
-    <parameter key="kernel.http_method_override">false</parameter>
+    <parameter key="kernel.http_method_override">true</parameter>
     <parameter key="kernel.trust_x_sendfile_type_header">false</parameter>
     <parameter key="kernel.trusted_hosts" type="collection"/>
     <parameter key="kernel.default_locale">en</parameter>
@@ -75,12 +75,10 @@
     <parameter key="session.metadata.storage_key">_sf2_meta</parameter>
     <parameter key="session.storage.options" type="collection">
       <parameter key="cache_limiter" type="string">0</parameter>
-      <parameter key="cookie_secure">auto</parameter>
       <parameter key="cookie_httponly">true</parameter>
-      <parameter key="cookie_samesite">lax</parameter>
       <parameter key="gc_probability">1</parameter>
     </parameter>
-    <parameter key="session.save_path">null</parameter>
+    <parameter key="session.save_path">/home/user/Documents/csv_miner/var/cache/dev/sessions</parameter>
     <parameter key="session.metadata.update_threshold">0</parameter>
     <parameter key="data_collector.templates" type="collection"/>
     <parameter key="doctrine.dbal.configuration.class">Doctrine\DBAL\Configuration</parameter>
@@ -151,9 +149,7 @@
     <parameter key="doctrine.orm.proxy_namespace">Proxies</parameter>
     <parameter key="doctrine.migrations.preferred_em">null</parameter>
     <parameter key="doctrine.migrations.preferred_connection">null</parameter>
-    <parameter key="console.command.ids" type="collection">
-      <parameter>console.command.public_alias.App\Command\ImportCsvCommand</parameter>
-    </parameter>
+    <parameter key="console.command.ids" type="collection"/>
   </parameters>
   <services>
     <service id="service_container" class="Symfony\Component\DependencyInjection\ContainerInterface" public="true" synthetic="true"/>
@@ -168,6 +164,9 @@
       <tag name="console.command"/>
       <tag name="container.no_preload"/>
       <argument type="service" id="doctrine.orm.default_entity_manager"/>
+      <call method="setName">
+        <argument>app:import-csv</argument>
+      </call>
     </service>
     <service id="App\Repository\ArticleRepository" class="App\Repository\ArticleRepository" autowire="true" autoconfigure="true">
       <tag name="doctrine.repository_service"/>
@@ -196,7 +195,7 @@
     </service>
     <service id="argument_resolver.service" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\ServiceValueResolver">
       <tag priority="-50" name="Symfony\Component\HttpKernel\Controller\ArgumentResolver\ServiceValueResolver">controller.argument_value_resolver</tag>
-      <argument type="service" id=".service_locator.L.EDYUC"/>
+      <argument type="service" id=".service_locator.HBdvAhp"/>
     </service>
     <service id="argument_resolver.default" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\DefaultValueResolver">
       <tag priority="-100" name="Symfony\Component\HttpKernel\Controller\ArgumentResolver\DefaultValueResolver">controller.argument_value_resolver</tag>
@@ -264,7 +263,7 @@
       <argument type="service" id="debug.controller_resolver"/>
       <argument type="service" id="request_stack"/>
       <argument type="service" id="debug.argument_resolver"/>
-      <argument>true</argument>
+      <argument>false</argument>
     </service>
     <service id="request_stack" class="Symfony\Component\HttpFoundation\RequestStack" public="true"/>
     <service id="http_cache" class="Symfony\Bundle\FrameworkBundle\HttpCache\HttpCache">
@@ -274,6 +273,11 @@
       <argument>null</argument>
       <argument type="collection">
         <argument key="debug">true</argument>
+      </argument>
+      <argument type="service">
+        <service class="void">
+          <factory class="Symfony\Component\HttpFoundation\Request" method="enableHttpMethodParameterOverride"/>
+        </service>
       </argument>
     </service>
     <service id="http_cache.store" class="Symfony\Component\HttpKernel\HttpCache\Store">
@@ -315,6 +319,7 @@
         <argument key="cache.system" type="service" id="cache.system" on-invalid="ignore_uninitialized"/>
         <argument key="cache.validator" type="service" id="cache.validator" on-invalid="ignore_uninitialized"/>
         <argument key="cache.serializer" type="service" id="cache.serializer" on-invalid="ignore_uninitialized"/>
+        <argument key="cache.annotations" type="service" id="cache.annotations" on-invalid="ignore_uninitialized"/>
         <argument key="cache.property_info" type="service" id="cache.property_info" on-invalid="ignore_uninitialized"/>
         <argument key="debug.stopwatch" type="service" id="debug.stopwatch" on-invalid="ignore_uninitialized"/>
         <argument key="debug.event_dispatcher" type="service" id="debug.event_dispatcher" on-invalid="ignore_uninitialized"/>
@@ -333,6 +338,9 @@
           <argument>reset</argument>
         </argument>
         <argument key="cache.serializer" type="collection">
+          <argument>reset</argument>
+        </argument>
+        <argument key="cache.annotations" type="collection">
           <argument>reset</argument>
         </argument>
         <argument key="cache.property_info" type="collection">
@@ -496,6 +504,7 @@
         <argument>cache.system</argument>
         <argument>cache.validator</argument>
         <argument>cache.serializer</argument>
+        <argument>cache.annotations</argument>
         <argument>cache.property_info</argument>
         <argument>cache.doctrine.orm.default.result</argument>
         <argument>cache.doctrine.orm.default.query</argument>
@@ -538,6 +547,7 @@
         <argument>cache.system</argument>
         <argument>cache.validator</argument>
         <argument>cache.serializer</argument>
+        <argument>cache.annotations</argument>
         <argument>cache.property_info</argument>
         <argument>cache.doctrine.orm.default.result</argument>
         <argument>cache.doctrine.orm.default.query</argument>
@@ -557,6 +567,7 @@
         <argument>cache.system</argument>
         <argument>cache.validator</argument>
         <argument>cache.serializer</argument>
+        <argument>cache.annotations</argument>
         <argument>cache.property_info</argument>
         <argument>cache.doctrine.orm.default.result</argument>
         <argument>cache.doctrine.orm.default.query</argument>
@@ -815,6 +826,16 @@
       <argument type="service" id="logger" on-invalid="ignore"/>
       <factory class="Symfony\Component\Cache\Adapter\AbstractAdapter" method="createSystemCache"/>
     </service>
+    <service id="cache.annotations" class="Symfony\Component\Cache\Adapter\AdapterInterface">
+      <tag name="cache.pool"/>
+      <tag name="kernel.reset" method="reset"/>
+      <argument>U3p1PqJgzr</argument>
+      <argument>0</argument>
+      <argument>%container.build_id%</argument>
+      <argument>/home/user/Documents/csv_miner/var/cache/dev/pools/system</argument>
+      <argument type="service" id="logger" on-invalid="ignore"/>
+      <factory class="Symfony\Component\Cache\Adapter\AbstractAdapter" method="createSystemCache"/>
+    </service>
     <service id="cache.property_info" class="Symfony\Component\Cache\Adapter\AdapterInterface">
       <tag name="cache.pool"/>
       <tag name="kernel.reset" method="reset"/>
@@ -944,6 +965,7 @@
         <argument key="cache.system" type="service" id="cache.system" on-invalid="ignore_uninitialized"/>
         <argument key="cache.validator" type="service" id="cache.validator" on-invalid="ignore_uninitialized"/>
         <argument key="cache.serializer" type="service" id="cache.serializer" on-invalid="ignore_uninitialized"/>
+        <argument key="cache.annotations" type="service" id="cache.annotations" on-invalid="ignore_uninitialized"/>
         <argument key="cache.property_info" type="service" id="cache.property_info" on-invalid="ignore_uninitialized"/>
       </argument>
     </service>
@@ -954,6 +976,7 @@
         <argument key="cache.system" type="service" id="cache.system" on-invalid="ignore_uninitialized"/>
         <argument key="cache.validator" type="service" id="cache.validator" on-invalid="ignore_uninitialized"/>
         <argument key="cache.serializer" type="service" id="cache.serializer" on-invalid="ignore_uninitialized"/>
+        <argument key="cache.annotations" type="service" id="cache.annotations" on-invalid="ignore_uninitialized"/>
         <argument key="cache.property_info" type="service" id="cache.property_info" on-invalid="ignore_uninitialized"/>
         <argument key="cache.doctrine.orm.default.result" type="service" id="cache.doctrine.orm.default.result" on-invalid="ignore_uninitialized"/>
         <argument key="cache.doctrine.orm.default.query" type="service" id="cache.doctrine.orm.default.query" on-invalid="ignore_uninitialized"/>
@@ -1197,7 +1220,7 @@
     </service>
     <service id="argument_resolver.not_tagged_controller" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\NotTaggedControllerValueResolver">
       <tag name="controller.argument_value_resolver" priority="-200"/>
-      <argument type="service" id=".service_locator.L.EDYUC"/>
+      <argument type="service" id=".service_locator.HBdvAhp"/>
     </service>
     <service id="routing.resolver" class="Symfony\Component\Config\Loader\LoaderResolver">
       <call method="addLoader">
@@ -1383,24 +1406,24 @@
     </service>
     <service id="session.storage.factory.native" class="Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorageFactory">
       <argument>%session.storage.options%</argument>
-      <argument type="service" id="session.handler.native"/>
+      <argument type="service" id="session.handler.native_file"/>
       <argument type="service">
         <service class="Symfony\Component\HttpFoundation\Session\Storage\MetadataBag">
           <argument>_sf2_meta</argument>
           <argument>0</argument>
         </service>
       </argument>
-      <argument>true</argument>
+      <argument>false</argument>
     </service>
     <service id="session.storage.factory.php_bridge" class="Symfony\Component\HttpFoundation\Session\Storage\PhpBridgeSessionStorageFactory">
-      <argument type="service" id="session.handler.native"/>
+      <argument type="service" id="session.handler.native_file"/>
       <argument type="service">
         <service class="Symfony\Component\HttpFoundation\Session\Storage\MetadataBag">
           <argument>_sf2_meta</argument>
           <argument>0</argument>
         </service>
       </argument>
-      <argument>true</argument>
+      <argument>false</argument>
     </service>
     <service id="session.storage.factory.mock_file" class="Symfony\Component\HttpFoundation\Session\Storage\MockFileSessionStorageFactory">
       <argument>/home/user/Documents/csv_miner/var/cache/dev/sessions</argument>
@@ -1420,7 +1443,7 @@
     <service id="session.handler.native_file" class="Symfony\Component\HttpFoundation\Session\Storage\Handler\StrictSessionHandler">
       <argument type="service">
         <service class="Symfony\Component\HttpFoundation\Session\Storage\Handler\NativeFileSessionHandler">
-          <argument>null</argument>
+          <argument>/home/user/Documents/csv_miner/var/cache/dev/sessions</argument>
         </service>
       </argument>
     </service>
@@ -1434,7 +1457,7 @@
       <tag name="kernel.reset" method="reset"/>
       <tag name="container.hot_path"/>
       <tag name="container.hot_path"/>
-      <argument type="service" id=".service_locator.u6DWx23"/>
+      <argument type="service" id=".service_locator.cXsfP3P"/>
       <argument>true</argument>
       <argument>%session.storage.options%</argument>
     </service>
@@ -1537,7 +1560,7 @@
       </call>
     </service>
     <service id="doctrine.dbal.default_connection.event_manager" class="Symfony\Bridge\Doctrine\ContainerAwareEventManager">
-      <argument type="service" id=".service_locator.LMuqDDe"/>
+      <argument type="service" id=".service_locator.VHsrTPK"/>
       <argument type="collection">
         <argument type="collection">
           <argument type="collection">
@@ -1660,7 +1683,7 @@
     </service>
     <service id="doctrine.orm.listeners.pdo_session_handler_schema_listener" class="Symfony\Bridge\Doctrine\SchemaListener\PdoSessionHandlerSchemaListener">
       <tag name="doctrine.event_listener" event="postGenerateSchema"/>
-      <argument type="service" id="session.handler.native"/>
+      <argument type="service" id="session.handler.native_file"/>
     </service>
     <service id="doctrine.orm.listeners.lock_store_schema_listener" class="Symfony\Bridge\Doctrine\SchemaListener\LockStoreSchemaListener">
       <tag name="doctrine.event_listener" event="postGenerateSchema"/>
@@ -1875,7 +1898,7 @@
       <argument type="service" id="logger" on-invalid="null"/>
       <call method="setDefinition">
         <argument>Doctrine\Migrations\Version\MigrationFactory</argument>
-        <argument type="service_closure" id="doctrine.migrations.migrations_factory"/>
+        <argument type="service_closure" id="doctrine.migrations.container_aware_migrations_factory"/>
       </call>
     </service>
     <service id="doctrine.migrations.configuration_loader" class="Doctrine\Migrations\Configuration\Migration\ExistingConfiguration">
@@ -1907,8 +1930,10 @@
         <argument type="service" id="doctrine.migrations.storage.table_storage"/>
       </call>
     </service>
-    <service id="doctrine.migrations.migrations_factory" class="Doctrine\Migrations\Version\MigrationFactory">
-      <factory service="doctrine.migrations.dependency_factory" method="getMigrationFactory"/>
+    <service id="doctrine.migrations.container_aware_migrations_factory" class="Doctrine\Bundle\MigrationsBundle\MigrationsFactory\ContainerAwareMigrationFactory">
+      <tag name="container.decorator" id="doctrine.migrations.migrations_factory" inner="doctrine.migrations.container_aware_migrations_factory.inner"/>
+      <argument type="service" id="doctrine.migrations.container_aware_migrations_factory.inner"/>
+      <argument type="service" id="service_container"/>
     </service>
     <service id="doctrine_migrations.diff_command" class="Doctrine\Migrations\Tools\Console\Command\DiffCommand">
       <tag name="console.command" command="doctrine:migrations:diff"/>
@@ -2270,7 +2295,7 @@
     <service id=".abstract.instanceof.App\Command\ImportCsvCommand" class="App\Command\ImportCsvCommand" autowire="true" autoconfigure="true" abstract="true"/>
     <service id=".instanceof.Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepositoryInterface.0.App\Repository\ArticleRepository" class="App\Repository\ArticleRepository" autowire="true" abstract="true"/>
     <service id=".abstract.instanceof.App\Repository\ArticleRepository" class="App\Repository\ArticleRepository" autowire="true" autoconfigure="true" abstract="true"/>
-    <service id=".service_locator.bJ.4HC5" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.w7.f4fT" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
         <argument key="base64" type="service_closure" id="container.env_var_processor"/>
@@ -2693,7 +2718,7 @@
         <argument key="loader" type="service_closure" id=".errored..service_locator.y4_Zrx..Symfony\Component\Config\Loader\LoaderInterface"/>
       </argument>
     </service>
-    <service id=".service_locator.L.EDYUC" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.HBdvAhp" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
         <argument key="App\Kernel::loadRoutes" type="service_closure" id=".service_locator.y4_Zrx."/>
@@ -2758,7 +2783,7 @@
       <argument type="service" id="argument_resolver.query_parameter_value_resolver"/>
       <argument type="service" id="debug.stopwatch"/>
     </service>
-    <service id=".service_locator.LMuqDDe" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.VHsrTPK" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
         <argument key="doctrine.orm.default_listeners.attach_entity_listeners" type="service_closure" id="doctrine.orm.default_listeners.attach_entity_listeners"/>
@@ -2824,7 +2849,7 @@
       <argument type="service" id="service_container"/>
       <factory service=".service_locator.cUcW89y" method="withContext"/>
     </service>
-    <service id=".service_locator.3bxtozr" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator._ju.bgC" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
         <argument key="Symfony\Bridge\Doctrine\ArgumentResolver\EntityValueResolver" type="service_closure" id=".debug.value_resolver.doctrine.orm.entity_value_resolver"/>
@@ -2869,7 +2894,7 @@
         <argument key="kernel" type="service_closure" id="kernel"/>
       </argument>
     </service>
-    <service id=".service_locator.u6DWx23" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.cXsfP3P" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
         <argument key="logger" type="service_closure" id="logger" on-invalid="ignore"/>
@@ -2907,7 +2932,10 @@
         <argument type="service" id=".debug.value_resolver.argument_resolver.variadic"/>
         <argument type="service" id=".debug.value_resolver.argument_resolver.not_tagged_controller"/>
       </argument>
-      <argument type="service" id=".service_locator.3bxtozr"/>
+      <argument type="service" id=".service_locator._ju.bgC"/>
+    </service>
+    <service id="doctrine.migrations.container_aware_migrations_factory.inner" class="Doctrine\Migrations\Version\MigrationFactory">
+      <factory service="doctrine.migrations.dependency_factory" method="getMigrationFactory"/>
     </service>
     <service id=".doctrine.orm.default_metadata_driver.inner" class="Doctrine\Persistence\Mapping\Driver\MappingDriverChain">
       <call method="addDriver">
@@ -3380,8 +3408,9 @@
     </service>
     <service id="console.command_loader" class="Symfony\Component\Console\CommandLoader\ContainerCommandLoader" public="true">
       <tag name="container.no_preload"/>
-      <argument type="service" id=".service_locator.IrAFNN_"/>
+      <argument type="service" id=".service_locator.WAK5O_0"/>
       <argument type="collection">
+        <argument key="app:import-csv">App\Command\ImportCsvCommand</argument>
         <argument key="about">console.command.about</argument>
         <argument key="assets:install">console.command.assets_install</argument>
         <argument key="cache:clear">console.command.cache_clear</argument>
@@ -3468,18 +3497,18 @@
         <argument key="make:webhook">maker.auto_command.make_webhook</argument>
       </argument>
     </service>
-    <service id=".service_locator.IrAFNN_" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.WAK5O_0" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
-        <argument key="Doctrine\DBAL\Tools\Console\Command\RunSqlCommand" type="service_closure" id="Doctrine\DBAL\Tools\Console\Command\RunSqlCommand"/>
+        <argument key="App\Command\ImportCsvCommand" type="service_closure" id="App\Command\ImportCsvCommand"/>
         <argument key="console.command.about" type="service_closure" id=".console.command.about.lazy"/>
         <argument key="console.command.assets_install" type="service_closure" id=".console.command.assets_install.lazy"/>
         <argument key="console.command.cache_clear" type="service_closure" id=".console.command.cache_clear.lazy"/>
         <argument key="console.command.cache_pool_clear" type="service_closure" id=".console.command.cache_pool_clear.lazy"/>
-        <argument key="console.command.cache_pool_delete" type="service_closure" id=".console.command.cache_pool_delete.lazy"/>
-        <argument key="console.command.cache_pool_invalidate_tags" type="service_closure" id=".console.command.cache_pool_invalidate_tags.lazy"/>
-        <argument key="console.command.cache_pool_list" type="service_closure" id=".console.command.cache_pool_list.lazy"/>
         <argument key="console.command.cache_pool_prune" type="service_closure" id=".console.command.cache_pool_prune.lazy"/>
+        <argument key="console.command.cache_pool_invalidate_tags" type="service_closure" id=".console.command.cache_pool_invalidate_tags.lazy"/>
+        <argument key="console.command.cache_pool_delete" type="service_closure" id=".console.command.cache_pool_delete.lazy"/>
+        <argument key="console.command.cache_pool_list" type="service_closure" id=".console.command.cache_pool_list.lazy"/>
         <argument key="console.command.cache_warmup" type="service_closure" id=".console.command.cache_warmup.lazy"/>
         <argument key="console.command.config_debug" type="service_closure" id=".console.command.config_debug.lazy"/>
         <argument key="console.command.config_dump_reference" type="service_closure" id=".console.command.config_dump_reference.lazy"/>
@@ -3490,30 +3519,33 @@
         <argument key="console.command.event_dispatcher_debug" type="service_closure" id=".console.command.event_dispatcher_debug.lazy"/>
         <argument key="console.command.router_debug" type="service_closure" id=".console.command.router_debug.lazy"/>
         <argument key="console.command.router_match" type="service_closure" id=".console.command.router_match.lazy"/>
-        <argument key="console.command.secrets_decrypt_to_local" type="service_closure" id=".console.command.secrets_decrypt_to_local.lazy"/>
-        <argument key="console.command.secrets_encrypt_from_local" type="service_closure" id=".console.command.secrets_encrypt_from_local.lazy"/>
+        <argument key="console.command.yaml_lint" type="service_closure" id=".console.command.yaml_lint.lazy"/>
+        <argument key="console.command.secrets_set" type="service_closure" id=".console.command.secrets_set.lazy"/>
+        <argument key="console.command.secrets_remove" type="service_closure" id=".console.command.secrets_remove.lazy"/>
         <argument key="console.command.secrets_generate_key" type="service_closure" id=".console.command.secrets_generate_key.lazy"/>
         <argument key="console.command.secrets_list" type="service_closure" id=".console.command.secrets_list.lazy"/>
-        <argument key="console.command.secrets_remove" type="service_closure" id=".console.command.secrets_remove.lazy"/>
-        <argument key="console.command.secrets_set" type="service_closure" id=".console.command.secrets_set.lazy"/>
-        <argument key="console.command.yaml_lint" type="service_closure" id=".console.command.yaml_lint.lazy"/>
+        <argument key="console.command.secrets_decrypt_to_local" type="service_closure" id=".console.command.secrets_decrypt_to_local.lazy"/>
+        <argument key="console.command.secrets_encrypt_from_local" type="service_closure" id=".console.command.secrets_encrypt_from_local.lazy"/>
+        <argument key="doctrine.database_create_command" type="service_closure" id="doctrine.database_create_command"/>
+        <argument key="doctrine.database_drop_command" type="service_closure" id="doctrine.database_drop_command"/>
+        <argument key="doctrine.query_sql_command" type="service_closure" id="doctrine.query_sql_command"/>
+        <argument key="Doctrine\DBAL\Tools\Console\Command\RunSqlCommand" type="service_closure" id="Doctrine\DBAL\Tools\Console\Command\RunSqlCommand"/>
         <argument key="doctrine.cache_clear_metadata_command" type="service_closure" id="doctrine.cache_clear_metadata_command"/>
         <argument key="doctrine.cache_clear_query_cache_command" type="service_closure" id="doctrine.cache_clear_query_cache_command"/>
         <argument key="doctrine.cache_clear_result_command" type="service_closure" id="doctrine.cache_clear_result_command"/>
         <argument key="doctrine.cache_collection_region_command" type="service_closure" id="doctrine.cache_collection_region_command"/>
-        <argument key="doctrine.clear_entity_region_command" type="service_closure" id="doctrine.clear_entity_region_command"/>
-        <argument key="doctrine.clear_query_region_command" type="service_closure" id="doctrine.clear_query_region_command"/>
-        <argument key="doctrine.database_create_command" type="service_closure" id="doctrine.database_create_command"/>
-        <argument key="doctrine.database_drop_command" type="service_closure" id="doctrine.database_drop_command"/>
-        <argument key="doctrine.mapping_info_command" type="service_closure" id="doctrine.mapping_info_command"/>
-        <argument key="doctrine.query_dql_command" type="service_closure" id="doctrine.query_dql_command"/>
-        <argument key="doctrine.query_sql_command" type="service_closure" id="doctrine.query_sql_command"/>
         <argument key="doctrine.schema_create_command" type="service_closure" id="doctrine.schema_create_command"/>
         <argument key="doctrine.schema_drop_command" type="service_closure" id="doctrine.schema_drop_command"/>
+        <argument key="doctrine.clear_entity_region_command" type="service_closure" id="doctrine.clear_entity_region_command"/>
+        <argument key="doctrine.mapping_info_command" type="service_closure" id="doctrine.mapping_info_command"/>
+        <argument key="doctrine.clear_query_region_command" type="service_closure" id="doctrine.clear_query_region_command"/>
+        <argument key="doctrine.query_dql_command" type="service_closure" id="doctrine.query_dql_command"/>
         <argument key="doctrine.schema_update_command" type="service_closure" id="doctrine.schema_update_command"/>
         <argument key="doctrine.schema_validate_command" type="service_closure" id="doctrine.schema_validate_command"/>
-        <argument key="doctrine_migrations.current_command" type="service_closure" id=".doctrine_migrations.current_command.lazy"/>
         <argument key="doctrine_migrations.diff_command" type="service_closure" id=".doctrine_migrations.diff_command.lazy"/>
+        <argument key="doctrine_migrations.sync_metadata_command" type="service_closure" id=".doctrine_migrations.sync_metadata_command.lazy"/>
+        <argument key="doctrine_migrations.versions_command" type="service_closure" id=".doctrine_migrations.versions_command.lazy"/>
+        <argument key="doctrine_migrations.current_command" type="service_closure" id=".doctrine_migrations.current_command.lazy"/>
         <argument key="doctrine_migrations.dump_schema_command" type="service_closure" id=".doctrine_migrations.dump_schema_command.lazy"/>
         <argument key="doctrine_migrations.execute_command" type="service_closure" id=".doctrine_migrations.execute_command.lazy"/>
         <argument key="doctrine_migrations.generate_command" type="service_closure" id=".doctrine_migrations.generate_command.lazy"/>
@@ -3521,12 +3553,11 @@
         <argument key="doctrine_migrations.migrate_command" type="service_closure" id=".doctrine_migrations.migrate_command.lazy"/>
         <argument key="doctrine_migrations.rollup_command" type="service_closure" id=".doctrine_migrations.rollup_command.lazy"/>
         <argument key="doctrine_migrations.status_command" type="service_closure" id=".doctrine_migrations.status_command.lazy"/>
-        <argument key="doctrine_migrations.sync_metadata_command" type="service_closure" id=".doctrine_migrations.sync_metadata_command.lazy"/>
         <argument key="doctrine_migrations.up_to_date_command" type="service_closure" id=".doctrine_migrations.up_to_date_command.lazy"/>
         <argument key="doctrine_migrations.version_command" type="service_closure" id=".doctrine_migrations.version_command.lazy"/>
-        <argument key="doctrine_migrations.versions_command" type="service_closure" id=".doctrine_migrations.versions_command.lazy"/>
         <argument key="maker.auto_command.make_auth" type="service_closure" id=".maker.auto_command.make_auth.lazy"/>
         <argument key="maker.auto_command.make_command" type="service_closure" id=".maker.auto_command.make_command.lazy"/>
+        <argument key="maker.auto_command.make_twig_component" type="service_closure" id=".maker.auto_command.make_twig_component.lazy"/>
         <argument key="maker.auto_command.make_controller" type="service_closure" id=".maker.auto_command.make_controller.lazy"/>
         <argument key="maker.auto_command.make_crud" type="service_closure" id=".maker.auto_command.make_crud.lazy"/>
         <argument key="maker.auto_command.make_docker_database" type="service_closure" id=".maker.auto_command.make_docker_database.lazy"/>
@@ -3536,21 +3567,20 @@
         <argument key="maker.auto_command.make_listener" type="service_closure" id=".maker.auto_command.make_listener.lazy"/>
         <argument key="maker.auto_command.make_message" type="service_closure" id=".maker.auto_command.make_message.lazy"/>
         <argument key="maker.auto_command.make_messenger_middleware" type="service_closure" id=".maker.auto_command.make_messenger_middleware.lazy"/>
-        <argument key="maker.auto_command.make_migration" type="service_closure" id=".maker.auto_command.make_migration.lazy"/>
         <argument key="maker.auto_command.make_registration_form" type="service_closure" id=".maker.auto_command.make_registration_form.lazy"/>
         <argument key="maker.auto_command.make_reset_password" type="service_closure" id=".maker.auto_command.make_reset_password.lazy"/>
         <argument key="maker.auto_command.make_schedule" type="service_closure" id=".maker.auto_command.make_schedule.lazy"/>
-        <argument key="maker.auto_command.make_security_custom" type="service_closure" id=".maker.auto_command.make_security_custom.lazy"/>
-        <argument key="maker.auto_command.make_security_form_login" type="service_closure" id=".maker.auto_command.make_security_form_login.lazy"/>
         <argument key="maker.auto_command.make_serializer_encoder" type="service_closure" id=".maker.auto_command.make_serializer_encoder.lazy"/>
         <argument key="maker.auto_command.make_serializer_normalizer" type="service_closure" id=".maker.auto_command.make_serializer_normalizer.lazy"/>
-        <argument key="maker.auto_command.make_stimulus_controller" type="service_closure" id=".maker.auto_command.make_stimulus_controller.lazy"/>
-        <argument key="maker.auto_command.make_test" type="service_closure" id=".maker.auto_command.make_test.lazy"/>
-        <argument key="maker.auto_command.make_twig_component" type="service_closure" id=".maker.auto_command.make_twig_component.lazy"/>
         <argument key="maker.auto_command.make_twig_extension" type="service_closure" id=".maker.auto_command.make_twig_extension.lazy"/>
-        <argument key="maker.auto_command.make_user" type="service_closure" id=".maker.auto_command.make_user.lazy"/>
+        <argument key="maker.auto_command.make_test" type="service_closure" id=".maker.auto_command.make_test.lazy"/>
         <argument key="maker.auto_command.make_validator" type="service_closure" id=".maker.auto_command.make_validator.lazy"/>
         <argument key="maker.auto_command.make_voter" type="service_closure" id=".maker.auto_command.make_voter.lazy"/>
+        <argument key="maker.auto_command.make_user" type="service_closure" id=".maker.auto_command.make_user.lazy"/>
+        <argument key="maker.auto_command.make_migration" type="service_closure" id=".maker.auto_command.make_migration.lazy"/>
+        <argument key="maker.auto_command.make_stimulus_controller" type="service_closure" id=".maker.auto_command.make_stimulus_controller.lazy"/>
+        <argument key="maker.auto_command.make_security_form_login" type="service_closure" id=".maker.auto_command.make_security_form_login.lazy"/>
+        <argument key="maker.auto_command.make_security_custom" type="service_closure" id=".maker.auto_command.make_security_custom.lazy"/>
         <argument key="maker.auto_command.make_webhook" type="service_closure" id=".maker.auto_command.make_webhook.lazy"/>
       </argument>
     </service>
@@ -3568,6 +3598,9 @@
     <service id="Symfony\Component\Filesystem\Filesystem" alias="filesystem"/>
     <service id="Symfony\Component\HttpKernel\Config\FileLocator" alias="file_locator"/>
     <service id="Symfony\Component\HttpFoundation\UriSigner" alias="uri_signer"/>
+    <service id="Symfony\Component\HttpKernel\UriSigner" alias="uri_signer">
+      <deprecated package="symfony/framework-bundle" version="6.4">The "%alias_id%" alias is deprecated, use "Symfony\Component\HttpFoundation\UriSigner" instead.</deprecated>
+    </service>
     <service id="Symfony\Component\DependencyInjection\ReverseContainer" alias="reverse_container"/>
     <service id="Symfony\Component\String\Slugger\SluggerInterface" alias="slugger"/>
     <service id="Symfony\Component\HttpKernel\Fragment\FragmentUriGeneratorInterface" alias="fragment.uri_generator"/>
@@ -3581,6 +3614,15 @@
     <service id="Symfony\Contracts\Cache\TagAwareCacheInterface" alias="cache.app.taggable"/>
     <service id="Symfony\Component\ErrorHandler\ErrorRenderer\FileLinkFormatter" alias="debug.file_link_formatter"/>
     <service id="Symfony\Component\Stopwatch\Stopwatch" alias="debug.stopwatch"/>
+    <service id="routing.loader.annotation" alias="routing.loader.attribute">
+      <deprecated package="symfony/routing" version="6.4">The "%alias_id%" service is deprecated, use the "routing.loader.attribute" service instead.</deprecated>
+    </service>
+    <service id="routing.loader.annotation.directory" alias="routing.loader.attribute.directory">
+      <deprecated package="symfony/routing" version="6.4">The "%alias_id%" service is deprecated, use the "routing.loader.attribute.directory" service instead.</deprecated>
+    </service>
+    <service id="routing.loader.annotation.file" alias="routing.loader.attribute.file">
+      <deprecated package="symfony/routing" version="6.4">The "%alias_id%" service is deprecated, use the "routing.loader.attribute.file" service instead.</deprecated>
+    </service>
     <service id="router" alias="router.default" public="true"/>
     <service id="Symfony\Component\Routing\RouterInterface" alias="router.default"/>
     <service id="Symfony\Component\Routing\Generator\UrlGeneratorInterface" alias="router.default"/>
@@ -3590,9 +3632,9 @@
     <service id="cache.default_redis_provider" alias=".cache_connection.GD_MSZC"/>
     <service id="cache.default_memcached_provider" alias=".cache_connection.JKE6keX"/>
     <service id="cache.default_doctrine_dbal_provider" alias="doctrine.dbal.default_connection"/>
-    <service id="SessionHandlerInterface" alias="session.handler.native"/>
+    <service id="SessionHandlerInterface" alias="session.handler.native_file"/>
     <service id="session.storage.factory" alias="session.storage.factory.native"/>
-    <service id="session.handler" alias="session.handler.native"/>
+    <service id="session.handler" alias="session.handler.native_file"/>
     <service id="Doctrine\DBAL\Connection" alias="doctrine.dbal.default_connection"/>
     <service id="Doctrine\Persistence\ManagerRegistry" alias="doctrine"/>
     <service id="Doctrine\Common\Persistence\ManagerRegistry" alias="doctrine"/>
@@ -3607,15 +3649,20 @@
     <service id="Doctrine\ORM\EntityManagerInterface $defaultEntityManager" alias="doctrine.orm.default_entity_manager"/>
     <service id="doctrine.orm.default_entity_manager.event_manager" alias="doctrine.dbal.default_connection.event_manager"/>
     <service id="doctrine.migrations.metadata_storage" alias="doctrine.migrations.storage.table_storage"/>
-    <service id="container.env_var_processors_locator" alias=".service_locator.bJ.4HC5" public="true"/>
-    <service id="argument_resolver.controller_locator" alias=".service_locator.L.EDYUC"/>
+    <service id="container.env_var_processors_locator" alias=".service_locator.w7.f4fT" public="true"/>
+    <service id="argument_resolver.controller_locator" alias=".service_locator.HBdvAhp"/>
     <service id="doctrine.id_generator_locator" alias=".service_locator.KLVvNIq"/>
     <service id="Psr\Log\LoggerInterface" alias="logger"/>
+    <service id=".service_locator.bJ.4HC5" alias=".service_locator.w7.f4fT"/>
+    <service id=".service_locator.L.EDYUC" alias=".service_locator.HBdvAhp"/>
+    <service id=".service_locator.LMuqDDe" alias=".service_locator.VHsrTPK"/>
     <service id="event_dispatcher" alias="debug.event_dispatcher" public="true"/>
     <service id="controller_resolver" alias="debug.controller_resolver"/>
     <service id="argument_resolver" alias="debug.argument_resolver"/>
+    <service id="doctrine.migrations.migrations_factory" alias="doctrine.migrations.container_aware_migrations_factory"/>
     <service id="doctrine.orm.default_metadata_driver" alias=".doctrine.orm.default_metadata_driver"/>
     <service id=".service_locator.gFlme_s" alias=".service_locator.y4_Zrx."/>
-    <service id="console.command.public_alias.App\Command\ImportCsvCommand" alias="App\Command\ImportCsvCommand" public="true"/>
+    <service id=".service_locator.3bxtozr" alias=".service_locator._ju.bgC"/>
+    <service id=".service_locator.u6DWx23" alias=".service_locator.cXsfP3P"/>
   </services>
 </container>

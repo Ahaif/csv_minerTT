@@ -27,8 +27,8 @@ use Symfony\Component\HttpKernel\KernelInterface;
  */
 class HttpCache extends BaseHttpCache
 {
-    protected ?string $cacheDir = null;
-    protected KernelInterface $kernel;
+    protected $cacheDir;
+    protected $kernel;
 
     private ?StoreInterface $store = null;
     private ?SurrogateInterface $surrogate;

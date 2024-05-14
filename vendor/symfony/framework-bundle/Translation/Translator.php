@@ -24,9 +24,10 @@ use Symfony\Component\Translation\Translator as BaseTranslator;
  */
 class Translator extends BaseTranslator implements WarmableInterface
 {
-    protected ContainerInterface $container;
-    protected array $loaderIds;
-    protected array $options = [
+    protected $container;
+    protected $loaderIds;
+
+    protected $options = [
         'cache_dir' => null,
         'debug' => false,
         'resource_files' => [],
@@ -93,7 +94,10 @@ class Translator extends BaseTranslator implements WarmableInterface
         parent::__construct($defaultLocale, $formatter, $this->options['cache_dir'], $this->options['debug'], $this->options['cache_vary']);
     }
 
-    public function warmUp(string $cacheDir, ?string $buildDir = null): array
+    /**
+     * @param string|null $buildDir
+     */
+    public function warmUp(string $cacheDir /* , string $buildDir = null */): array
     {
         // skip warmUp when translator doesn't use cache
         if (null === $this->options['cache_dir']) {
@@ -141,7 +145,10 @@ class Translator extends BaseTranslator implements WarmableInterface
         }
     }
 
-    protected function initialize(): void
+    /**
+     * @return void
+     */
+    protected function initialize()
     {
         if ($this->resourceFiles) {
             $this->addResourceFiles();

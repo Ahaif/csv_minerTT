@@ -11,6 +11,7 @@
 
 namespace Symfony\Bundle\FrameworkBundle;
 
+use Symfony\Bundle\FrameworkBundle\DependencyInjection\Compiler\AddAnnotationsCachedReaderPass;
 use Symfony\Bundle\FrameworkBundle\DependencyInjection\Compiler\AddDebugLogProcessorPass;
 use Symfony\Bundle\FrameworkBundle\DependencyInjection\Compiler\AssetsContextPass;
 use Symfony\Bundle\FrameworkBundle\DependencyInjection\Compiler\ContainerBuilderDebugDumpPass;
@@ -91,13 +92,21 @@ class_exists(Registry::class);
  */
 class FrameworkBundle extends Bundle
 {
-    public function boot(): void
+    /**
+     * @return void
+     */
+    public function boot()
     {
         $_ENV['DOCTRINE_DEPRECATIONS'] = $_SERVER['DOCTRINE_DEPRECATIONS'] ??= 'trigger';
 
         $handler = ErrorHandler::register(null, false);
 
-        $this->container->get('debug.error_handler_configurator')->configure($handler);
+        // When upgrading an existing Symfony application from 6.2 to 6.3, and
+        // the cache is warmed up, the service is not available yet, so we need
+        // to check if it exists.
+        if ($this->container->has('debug.error_handler_configurator')) {
+            $this->container->get('debug.error_handler_configurator')->configure($handler);
+        }
 
         if ($this->container->getParameter('kernel.http_method_override')) {
             Request::enableHttpMethodParameterOverride();
@@ -108,7 +117,10 @@ class FrameworkBundle extends Bundle
         }
     }
 
-    public function build(ContainerBuilder $container): void
+    /**
+     * @return void
+     */
+    public function build(ContainerBuilder $container)
     {
         parent::build($container);
 
@@ -139,6 +151,7 @@ class FrameworkBundle extends Bundle
         // but as late as possible to get resolved parameters
         $container->addCompilerPass($registerListenersPass, PassConfig::TYPE_BEFORE_REMOVING);
         $this->addCompilerPassIfExists($container, AddConstraintValidatorsPass::class);
+        $container->addCompilerPass(new AddAnnotationsCachedReaderPass(), PassConfig::TYPE_AFTER_REMOVING, -255);
         $this->addCompilerPassIfExists($container, AddValidatorInitializersPass::class);
         $this->addCompilerPassIfExists($container, AddConsoleCommandPass::class, PassConfig::TYPE_BEFORE_REMOVING);
         // must be registered as late as possible to get access to all Twig paths registered in
