@@ -3,7 +3,8 @@
 # testing:
   - git clone project
   - run composer update
-  - Migrate DB, run following commands
+  - Create and Migrate to DB, run following commands
+      - php bin/console doctrine:database:create
       - php bin/console make:migration
       - php bin/console doctrine:migrations:migrate
   - seed csv file tests in test_folder
